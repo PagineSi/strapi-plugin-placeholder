@@ -22,7 +22,7 @@ const bootstrap = ({ strapi }) => {
   const generatePlaceholder = async (event) => {
     const { data, where } = event.params;
     if (!data.url || !data.mime || !data.hash || !data.ext) {
-      const file = await strapi.documents("plugin::upload.file").findOne(where.id);
+      const file = await strapi.documents("plugin::upload.file").findFirst({id:where.id});
       data.url = data.url ?? file.url;
       data.mime = data.mime ?? file.mime;
       data.hash = data.hash ?? file.hash;
