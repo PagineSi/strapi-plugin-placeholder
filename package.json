@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "strapi-plugin-placeholder",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Generate base64 placeholders for Strapi images",
   "author": {
     "name": "@WalkingPizza",
