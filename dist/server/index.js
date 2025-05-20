@@ -16,13 +16,17 @@ const canGeneratePlaceholder = (file) => {
   return file.mime?.startsWith("image/") && file.url;
 };
 const getService = (strapi, serviceName) => {
-  return strapi.plugin(PLUGIN_ID).service(serviceName);
+  const plugin = strapi.plugin(PLUGIN_ID);
+  if (!plugin) {
+    throw new Error(`Plugin "${PLUGIN_ID}" not found`);
+  }
+  return plugin.service(serviceName);
 };
 const bootstrap = ({ strapi }) => {
   const generatePlaceholder = async (event) => {
     const { data, where } = event.params;
     if (!data.url || !data.mime || !data.hash || !data.ext) {
-      const file = await strapi.documents("plugin::upload.file").findFirst({id:where.id});
+      const file = await strapi.documents("plugin::upload.file").findFirst({ filters: { id: where.id } });
       data.url = data.url ?? file.url;
       data.mime = data.mime ?? file.mime;
       data.hash = data.hash ?? file.hash;
