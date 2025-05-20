@@ -40,6 +40,7 @@ const bootstrap = ({ strapi }) => {
       url: data.url,
       provider: data.provider
     });
+    console.log("data", data);
   };
   strapi.db.lifecycles.subscribe({
     models: ["plugin::upload.file"],
