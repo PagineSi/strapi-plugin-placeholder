@@ -51,13 +51,13 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.658.1",
     "@aws-sdk/s3-request-presigner": "^3.658.1",
-    "@strapi/admin": "^5.0.1",
+    "@strapi/admin": "^5.42.1",
     "plaiceholder": "^2.3.0"
   },
   "devDependencies": {
     "@strapi/sdk-plugin": "^5.2.6",
-    "@strapi/strapi": "^5.0.1",
-    "@strapi/typescript-utils": "^5.0.1",
+    "@strapi/strapi": "^5.42.1",
+    "@strapi/typescript-utils": "^5.42.1",
     "@types/mime-types": "^2.1.4",
     "prettier": "^3.3.3",
     "typescript": "^5.6.2"

@@ -1,6 +1,7 @@
 import mimeTypes from "mime-types";
 import { getPlaiceholder } from "plaiceholder";
-import AWS from "aws-sdk";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 const PLUGIN_ID = "strapi-plugin-placeholder";
 const canGeneratePlaceholder = (file) => {
   if (!file.mime) {
@@ -18,14 +19,17 @@ const bootstrap = ({ strapi }) => {
   const generatePlaceholder = async (event) => {
     const { data, where } = event.params;
     if (!data.url || !data.mime || !data.hash || !data.ext) {
-      const file = await strapi.documents("plugin::upload.file").findOne(where.id);
-      data.url = data.url ?? file.url;
-      data.mime = data.mime ?? file.mime;
-      data.hash = data.hash ?? file.hash;
-      data.ext = data.ext ?? file.ext;
+      const file = await strapi.documents("plugin::upload.file").findFirst({
+        filters: { id: where.id }
+      });
+      if (file) {
+        data.url = data.url ?? file.url;
+        data.mime = data.mime ?? file.mime;
+        data.hash = data.hash ?? file.hash;
+        data.ext = data.ext ?? file.ext;
+      }
     }
-    if (!canGeneratePlaceholder(data))
-      return;
+    if (!canGeneratePlaceholder(data)) return;
     data.placeholder = await getService(strapi, "placeholder").generate({
       hash: data.hash,
       ext: data.ext,
@@ -40,11 +44,15 @@ const bootstrap = ({ strapi }) => {
   });
 };
 const register = ({ strapi }) => {
-  if (!strapi.plugin("upload"))
-    return strapi.log.warn("Upload plugin is not installed, Plaiceholder won't be started.");
-  strapi.plugin("upload").contentTypes.file.attributes.placeholder = {
-    type: "text"
-  };
+  if (!strapi.plugin("upload")) {
+    return strapi.log.warn("Upload plugin is not installed, Placeholder won't be started.");
+  }
+  const uploadPlugin = strapi.plugin("upload");
+  if (uploadPlugin.contentTypes?.file?.attributes) {
+    uploadPlugin.contentTypes.file.attributes.placeholder = {
+      type: "text"
+    };
+  }
 };
 const config = {
   default: {},
@@ -64,9 +72,8 @@ const placeholder = ({ strapi }) => {
         let imageUrl = url;
         if (provider === "aws-s3") {
           const objectName = `${hash}${ext}`;
-          imageUrl = await getService(strapi, "minio").get({ settings: settings2, objectName });
-          if (!imageUrl)
-            return null;
+          imageUrl = await getService(strapi, "bucket").get({ settings: settings2, objectName });
+          if (!imageUrl) return null;
         } else if (provider !== "local") {
           strapi.log.warn(`Provider "${provider}" is not supported by the placeholder service.`);
           return null;
@@ -80,21 +87,21 @@ const placeholder = ({ strapi }) => {
     }
   };
 };
-const minio = () => ({
+const bucket = () => ({
   async get({ settings: settings2, objectName }) {
-    const s3 = new AWS.S3({
+    const s3 = new S3Client({
       endpoint: settings2.endpoint,
       credentials: {
         accessKeyId: settings2.accessKey,
         secretAccessKey: settings2.secretKey
       },
-      s3ForcePathStyle: true
+      forcePathStyle: settings2.forcePathStyle
     });
-    return s3.getSignedUrl("getObject", {
+    const command = new GetObjectCommand({
       Bucket: settings2.bucket,
-      Key: objectName,
-      Expires: 15 * 60
+      Key: objectName
     });
+    return getSignedUrl(s3, command, { expiresIn: 15 * 60 });
   }
 });
 const settings = ({ strapi }) => ({
@@ -113,7 +120,7 @@ const settings = ({ strapi }) => ({
 });
 const services = {
   placeholder,
-  minio,
+  bucket,
   settings
 };
 const index = {
@@ -125,4 +132,3 @@ const index = {
 export {
   index as default
 };
-//# sourceMappingURL=index.mjs.map
