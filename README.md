@@ -3,7 +3,9 @@
 Generate base64 placeholders for [Strapi](https://strapi.io/) images.
 
 ## 🖌️ Supported Content
+
 The Placeholder plugin currently supports the following formats:
+
 - JPEG
 - PNG
 - GIF
@@ -12,7 +14,7 @@ The Placeholder plugin currently supports the following formats:
 
 ## ✨ Supported Strapi Versions
 
-The Placeholder plugin is only compatible with Strapi v4.
+The Placeholder plugin is compatible with Strapi v5.
 
 ## ⚙️ Installation
 

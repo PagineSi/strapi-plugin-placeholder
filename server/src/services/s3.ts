@@ -1,20 +1,23 @@
-import AWS from 'aws-sdk';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const bucket = () => ({
   async get({ settings, objectName }) {
-    const s3 = new AWS.S3({
+    const s3 = new S3Client({
       endpoint: settings.endpoint,
       credentials: {
         accessKeyId: settings.accessKey,
         secretAccessKey: settings.secretKey,
       },
-      s3ForcePathStyle: settings.forcePathStyle,
+      forcePathStyle: settings.forcePathStyle,
     });
-    return s3.getSignedUrl('getObject', {
+
+    const command = new GetObjectCommand({
       Bucket: settings.bucket,
       Key: objectName,
-      Expires: 15 * 60,
     });
+
+    return getSignedUrl(s3, command, { expiresIn: 15 * 60 });
   },
 });
 
