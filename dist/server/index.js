@@ -1,10 +1,35 @@
 "use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+Object.defineProperties(exports, { __esModule: { value: true }, [Symbol.toStringTag]: { value: "Module" } });
 const mimeTypes = require("mime-types");
-const plaiceholder = require("plaiceholder");
+const promises = require("node:fs/promises");
+const path = require("node:path");
 const clientS3 = require("@aws-sdk/client-s3");
 const s3RequestPresigner = require("@aws-sdk/s3-request-presigner");
 const _interopDefault = (e) => e && e.__esModule ? e : { default: e };
 const mimeTypes__default = /* @__PURE__ */ _interopDefault(mimeTypes);
+const path__default = /* @__PURE__ */ _interopDefault(path);
 const PLUGIN_ID = "strapi-plugin-placeholder";
 const canGeneratePlaceholder = (file) => {
   if (!file.mime) {
@@ -62,6 +87,21 @@ const config = {
   validator() {
   }
 };
+const loadImage = async (strapi, url) => {
+  if (/^https?:\/\//i.test(url)) {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image "${url}": ${response.status} ${response.statusText}`);
+    }
+    return Buffer.from(await response.arrayBuffer());
+  }
+  const publicDir = path__default.default.resolve(strapi.dirs.static.public);
+  const filePath = path__default.default.resolve(publicDir, `.${url.startsWith("/") ? url : `/${url}`}`);
+  if (!filePath.startsWith(publicDir + path__default.default.sep)) {
+    throw new Error(`Image path "${url}" is outside the public directory.`);
+  }
+  return promises.readFile(filePath);
+};
 const placeholder = ({ strapi }) => {
   return {
     async generate({
@@ -81,7 +121,9 @@ const placeholder = ({ strapi }) => {
           strapi.log.warn(`Provider "${provider}" is not supported by the placeholder service.`);
           return null;
         }
-        const { base64 } = await plaiceholder.getPlaiceholder(imageUrl, settings2);
+        const { getPlaiceholder } = await import("plaiceholder");
+        const image = await loadImage(strapi, imageUrl);
+        const { base64 } = await getPlaiceholder(image, { removeAlpha: true, ...settings2 });
         return base64;
       } catch (error) {
         strapi.log.error(error);
@@ -132,4 +174,4 @@ const index = {
   config,
   services
 };
-module.exports = index;
+exports.default = index;
