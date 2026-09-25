@@ -19,7 +19,7 @@
   },
   "type": "commonjs",
   "engines": {
-    "node": ">=12.x.x <=20.x.x",
+    "node": ">=20.9.0 <=26.x.x",
     "npm": ">=6.0.0"
   },
   "exports": {
@@ -49,22 +49,29 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.658.1",
-    "@aws-sdk/s3-request-presigner": "^3.658.1",
-    "@strapi/admin": "^5.42.1",
-    "plaiceholder": "^2.3.0"
+    "@aws-sdk/client-s3": "^3.1140.0",
+    "@aws-sdk/s3-request-presigner": "^3.1140.0",
+    "@strapi/admin": "^5.55.1",
+    "mime-types": "^3.0.2",
+    "plaiceholder": "^3.0.0"
   },
   "devDependencies": {
-    "@strapi/sdk-plugin": "^5.2.6",
-    "@strapi/strapi": "^5.42.1",
-    "@strapi/typescript-utils": "^5.42.1",
-    "@types/mime-types": "^2.1.4",
-    "prettier": "^3.3.3",
-    "typescript": "^5.6.2"
+    "@strapi/sdk-plugin": "^6.1.1",
+    "@strapi/strapi": "^5.55.1",
+    "@strapi/typescript-utils": "^5.55.1",
+    "@types/mime-types": "^3.0.1",
+    "prettier": "^3.9.9",
+    "sharp": "^0.35.4",
+    "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "mime-types": "2.1.35",
-    "plaiceholder": "^2.3.0",
-    "sharp": "^0.30.1"
+    "plaiceholder": "^3.0.0",
+    "sharp": ">=0.30.6"
+  },
+  "overrides": {
+    "nodemailer@<9.1.1": "^9.1.1",
+    "qs@<6.16.0": "^6.16.0",
+    "sharp@<0.35.4": "^0.35.4",
+    "vite@<6.4.3": "^6.4.3"
   }
 }

@@ -1,5 +1,6 @@
 import mimeTypes from "mime-types";
-import { getPlaiceholder } from "plaiceholder";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 const PLUGIN_ID = "strapi-plugin-placeholder";
@@ -59,6 +60,21 @@ const config = {
   validator() {
   }
 };
+const loadImage = async (strapi, url) => {
+  if (/^https?:\/\//i.test(url)) {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image "${url}": ${response.status} ${response.statusText}`);
+    }
+    return Buffer.from(await response.arrayBuffer());
+  }
+  const publicDir = path.resolve(strapi.dirs.static.public);
+  const filePath = path.resolve(publicDir, `.${url.startsWith("/") ? url : `/${url}`}`);
+  if (!filePath.startsWith(publicDir + path.sep)) {
+    throw new Error(`Image path "${url}" is outside the public directory.`);
+  }
+  return readFile(filePath);
+};
 const placeholder = ({ strapi }) => {
   return {
     async generate({
@@ -78,7 +94,9 @@ const placeholder = ({ strapi }) => {
           strapi.log.warn(`Provider "${provider}" is not supported by the placeholder service.`);
           return null;
         }
-        const { base64 } = await getPlaiceholder(imageUrl, settings2);
+        const { getPlaiceholder } = await import("plaiceholder");
+        const image = await loadImage(strapi, imageUrl);
+        const { base64 } = await getPlaiceholder(image, { removeAlpha: true, ...settings2 });
         return base64;
       } catch (error) {
         strapi.log.error(error);
