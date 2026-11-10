@@ -114,9 +114,14 @@ const placeholder = ({ strapi }) => {
         const settings2 = getService(strapi, "settings").get();
         let imageUrl = url;
         if (provider === "aws-s3") {
-          const objectName = `${hash}${ext}`;
-          imageUrl = await getService(strapi, "bucket").get({ settings: settings2, objectName });
-          if (!imageUrl) return null;
+          if (settings2.bucket) {
+            const objectName = `${hash}${ext}`;
+            imageUrl = await getService(strapi, "bucket").get({ settings: settings2, objectName });
+            if (!imageUrl) return null;
+          } else if (!/^https?:\/\//i.test(url)) {
+            strapi.log.warn(`Placeholder: no bucket configured and "${url}" is not a public URL, skipping.`);
+            return null;
+          }
         } else if (provider !== "local") {
           strapi.log.warn(`Provider "${provider}" is not supported by the placeholder service.`);
           return null;

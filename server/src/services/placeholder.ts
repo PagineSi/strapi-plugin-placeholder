@@ -40,9 +40,17 @@ const placeholder = ({ strapi }: { strapi: Core.Strapi }) => {
         let imageUrl = url;
 
         if (provider === 'aws-s3') {
-          const objectName = `${hash}${ext}`;
-          imageUrl = await getService(strapi, 'bucket').get({ settings, objectName });
-          if (!imageUrl) return null;
+          // A bucket in the plugin config means private objects: sign a URL with those credentials.
+          // Without it, download the URL set by the upload provider (public bucket or CDN baseUrl):
+          // signing with an empty config always failed ("No value provided for input HTTP label: Bucket").
+          if ((settings as { bucket?: string }).bucket) {
+            const objectName = `${hash}${ext}`;
+            imageUrl = await getService(strapi, 'bucket').get({ settings, objectName });
+            if (!imageUrl) return null;
+          } else if (!/^https?:\/\//i.test(url)) {
+            strapi.log.warn(`Placeholder: no bucket configured and "${url}" is not a public URL, skipping.`);
+            return null;
+          }
         } else if (provider !== 'local') {
           strapi.log.warn(`Provider "${provider}" is not supported by the placeholder service.`);
           return null;
